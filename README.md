@@ -1,172 +1,150 @@
-# Canvas–MyLab Gradebook Merger
+# MyLab to Canvas Gradebook
 
-![Title slide from the original program guide](docs/images/how-to-use-cover.png)
+A small, private web app for Penn State math instructors. It adds MyLab section scores to one assignment in a Canvas gradebook export, lets the instructor review every proposed change, and downloads a new Canvas-compatible CSV.
 
-This repository contains a command-line tool that combines grades from a Canvas gradebook export and a Pearson MyLab Math export. It uses the Canvas API to let an instructor or teaching assistant select a course and assignment, calculates adjusted MyLab scores, writes those scores into a copy of the Canvas gradebook, and saves the result as `new_canvas_gradebook.csv` for manual review and upload.
+The app runs entirely in the browser. Gradebook files and student data are not sent to a server. Only the preferred full-credit threshold is stored in the browser.
 
 > [!IMPORTANT]
-> A valid Canvas personal access token is required to select a course and assignment. The current repository owner no longer has a valid token, so the complete workflow has not been tested against Canvas. The program writes a local CSV; it does not upload grades through the API.
+> This is an unofficial helper, not a Penn State, Instructure, or Pearson product. Always review Canvas's import preview before accepting grade changes.
 
 ## Workflow
 
-```mermaid
-flowchart LR
-    A[Canvas API] -->|course, group, and assignment ID| B[Select assignment]
-    C[canvas.csv] --> D[Prepare Canvas rows]
-    E[mylab.csv] --> F[Prepare MyLab scores]
-    D --> G[Match students by email or name]
-    F --> G
-    B --> H[Locate assignment column]
-    G --> I[Apply section weights]
-    H --> J[Merge scores]
-    I --> J
-    J --> K[new_canvas_gradebook.csv]
-    K --> L[Review and upload manually]
+### 1. Upload the Canvas gradebook
+
+In Penn State Canvas, open the course gradebook, choose **Export**, and download the complete gradebook CSV. Add that file to the first screen. The app checks the layout and reports only student and assignment counts.
+
+![Canvas gradebook upload with local-processing notice](docs/images/web-upload-canvas.png)
+
+### 2. Choose the assignment and add MyLab
+
+Select the Canvas assignment that should receive the MyLab points. In MyLab, export the detailed gradebook as CSV and add it to the app. The supported export contains section keys, a `Weight` row, an `Attempt` row, student email addresses, and normalized section scores from 0 through 1.
+
+### 3. Configure grading
+
+Choose a full-credit threshold from 1% through 100%. The default is 80%. Check or edit the point value detected for every MyLab section. Fractional values such as 2.5 are supported, and zero disables a section without blocking the workflow.
+
+For a section score `s`, threshold `t`, and section weight `w`:
+
+```text
+if s >= t: adjusted = w
+otherwise: adjusted = w × ceil((s + (1 - t)) × 10) / 10
 ```
 
-The score adjustment for each MyLab section follows the implementation in `adjust()`:
+The adjusted section values are added to the existing score in the selected Canvas assignment. The result is rounded to one decimal place using round-half-to-even behavior.
 
-- A normalized score of at least `0.8` receives the full configured section weight.
-- Lower scores use `weight × ceil((score + 0.2) × 10) / 10`.
-- Adjusted section scores are added to the existing score for the selected Canvas assignment.
+### 4. Review every proposed score
 
-## Repository structure
+The review screen shows the current Canvas score, calculated MyLab addition, new Canvas score, and all warnings. Expand **Score details** to inspect each section.
+
+![Score review with explicit warnings and confirmations](docs/images/web-review-scores.png)
+
+Automatic matches use the MyLab email and Canvas `SIS Login ID`. Penn State addresses match the corresponding account name with or without `@psu.edu`. Names can produce suggestions, but the app never accepts a name suggestion automatically.
+
+Before download, the instructor must:
+
+- confirm or reject every suggested or duplicate match;
+- acknowledge unmatched students, which remain unchanged;
+- acknowledge that blank Canvas and MyLab scores are treated as zero;
+- approve each calculated score above the assignment maximum.
+
+Invalid numeric content blocks the download. The app changes only confirmed student cells in the selected assignment column. It preserves the remaining Canvas rows and columns.
+
+### 5. Download and import
+
+Download the generated `canvas-gradebook-updated-YYYY-MM-DD.csv`. The app then clears gradebook data from its in-memory state and shows aggregate counts only.
+
+![Completed download with Canvas import guidance](docs/images/web-download-complete.png)
+
+Back in Canvas, import the downloaded file and inspect the import preview carefully. Keep the original Canvas export until the updated grades have been verified.
+
+## Browser and format requirements
+
+- A current desktop version of Chrome or Edge is recommended.
+- Each CSV must be 25 MB or smaller.
+- Use a complete Penn State Canvas gradebook export with `Student`, `SIS User ID`, `SIS Login ID`, and a `Points Possible` row.
+- Assignment headers must include Canvas's numeric assignment identifier in parentheses.
+- Use the detailed MyLab CSV layout described above. The parser supports one or more sections and preserves fractional weights.
+
+Processing happens locally in a dedicated browser worker. The deployed site does not need a database, server function, secret, or account connection.
+
+## Codebase structure
 
 | Path | Purpose |
 | --- | --- |
-| `grading-script.py` | Main program. Handles Canvas selection, CSV preprocessing, identity matching, score adjustment, merging, and output. |
-| `execute.sh` | Minimal Bash launcher for `grading-script.py`. Intended for Git Bash, WSL, Linux, or macOS rather than native PowerShell. |
-| `templates/index.html` | Unconnected web-form prototype. No Flask/FastAPI server or route currently renders or processes it. |
-| `env/math_grader_env.yml` | Legacy Conda environment draft. It currently contains a misspelled `dependenies` key and omits `InquirerPy`; use the virtual-environment instructions below instead. |
-| `How to use the program.pptx` | Original 15-slide setup and usage guide. Some slides contain an old token and student-identifying information; redact them before sharing the deck. |
-| `canvas.csv` | Expected Canvas input filename. Contains protected student data. |
-| `mylab.csv` | Expected MyLab input filename. Contains protected student data. |
-| `new_canvas_gradebook.csv` | Generated Canvas-compatible output. Review it before uploading. |
-| `canvas-old-gradebook-compare/` | Historical Canvas input snapshots used for manual comparisons. |
-| `mylab-gradebook-compare/` | Historical MyLab snapshots used for manual comparisons. |
-| `canvas-new-gradebook-compare/` | Historical generated outputs used for manual comparisons. |
-| `.serena/` | Serena project configuration and local semantic-index metadata. |
+| `src/app/` | Wizard state, controller, and threshold-only preference storage. |
+| `src/csv/` | CSV text/file parsing, Canvas and MyLab layout validation, browser worker, and Canvas export. |
+| `src/domain/` | Pure score formula, conservative matching, review policy, and shared types. |
+| `src/ui/components/` | Reusable file picker, notices, progress indicator, and review table. |
+| `src/ui/views/` | The five wizard screens. |
+| `tests/unit/` | Formula, parser, matching, state, export, and Vercel configuration tests. |
+| `tests/e2e/` | Chromium/tablet workflow, privacy, accessibility, download, and screenshot tests. |
+| `tests/fixtures/anonymized/` | Synthetic gradebooks safe for tests and documentation. |
+| `scripts/check-bundle-size.mjs` | Enforces the 150 KiB compressed JavaScript budget. |
+| `vercel.json` | Static Vite build settings and restrictive response headers. |
+| `grading-script.py` | Retained legacy command-line implementation; it is no longer the primary product. |
 
-## Requirements
+## Local development
 
-- Python 3
-- `numpy`
-- `pandas`
-- `canvasapi`
-- `InquirerPy`
-- A Canvas personal access token with access to the target course
-- A Canvas gradebook CSV and a MyLab gradebook CSV in the layouts expected by the script
+Requirements:
 
-CanvasAPI expects the institution's Canvas base URL and an access token. This project currently fixes the base URL to Penn State Canvas in `grading-script.py`; change `API_URL` before using another Canvas installation.
+- Node.js 24
+- npm
 
-## Install
-
-PowerShell:
+Install and start the development server:
 
 ```powershell
-py -3 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install numpy pandas canvasapi InquirerPy
+npm ci
+npm run dev
 ```
 
-Bash:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install numpy pandas canvasapi InquirerPy
-```
-
-![Dependency installation commands shown in the original guide](docs/images/install-dependencies.png)
-
-The repository does not currently provide a working lockfile or requirements file, so installs are not reproducible across time.
-
-## Prepare the gradebooks
-
-### Canvas
-
-1. Open the course gradebook in Canvas.
-2. Filter the gradebook to the assignment that will receive the merged score.
-3. Export the current gradebook view.
-4. Rename the downloaded file to `canvas.csv`.
-5. Place it in the repository root beside `grading-script.py`.
-
-The parser expects Canvas metadata in the first two data rows and a totals or metadata row at the end. It preserves only `Student`, `SIS Login ID`, and the column whose name contains the selected Canvas assignment ID.
-
-### MyLab Math
-
-1. Export a MyLab gradebook whose section scores are normalized from `0` to `1`.
-2. Keep one score column for each section that contributes to the Canvas assignment.
-3. Rename the file to `mylab.csv`.
-4. Place it in the repository root.
-
-The current parser relies on fixed column positions, four leading metadata rows, and seven trailing summary rows. Verify the export layout before running the program because Pearson export formats may differ.
-
-## Run
-
-From the repository root:
+Open the local URL printed by Vite. Production files are generated in `dist`:
 
 ```powershell
-python grading-script.py
+npm run build
+npm run preview
 ```
 
-Or from Bash:
+The project pins TypeScript 7.0.2. Its `tsc` command uses Microsoft's native TypeScript compiler implemented in Go. The shipped website is still ordinary static HTML, CSS, and JavaScript and requires no Go service.
 
-```bash
-./execute.sh
+## Verification
+
+```powershell
+npm run typecheck
+npm test
+npm run test:coverage
+npm run test:e2e
+npm run test:e2e:edge
+npm run check:size
+npm run docs:screenshots
 ```
 
-The terminal will ask you to:
+`npm run test:e2e` runs Chromium desktop and tablet projects at full local CPU concurrency. Edge has a separate command so environments without the Edge channel can still run the main suite.
 
-1. Enter a Canvas personal access token.
-2. Select a course where you are enrolled as a teaching assistant.
-3. Select an assignment group and assignment.
-4. Confirm the selection.
-5. Keep or change each MyLab section weight.
+`npm run test:private` is an optional local-only legacy comparison harness. It skips cleanly unless ignored historical comparison directories exist. Never commit real gradebooks or screenshots containing student data.
 
-![Canvas token prompt shown in the original guide](docs/images/run-prompt.png)
+## Vercel deployment
 
-The token is currently entered with ordinary `input()`, so it remains visible in the terminal. Do not record the session or share screenshots. A future version should use hidden input or OAuth.
+The repository is ready for a static Vercel project:
 
-## Review the output
+- framework: Vite;
+- build command: `npm run build`;
+- output directory: `dist`;
+- no rewrites or server functions;
+- a Content Security Policy with network connections disabled for the app;
+- anti-framing, no-referrer, MIME sniffing, and device-permission restrictions.
 
-If processing succeeds, the program writes `new_canvas_gradebook.csv` in the repository root. Before uploading it to Canvas:
+Import the repository into Vercel and review the detected settings before the first deployment. No environment variables or secrets are required.
 
-1. Keep an untouched copy of the original Canvas export.
-2. Compare student counts and the selected assignment column.
-3. Review every unmatched-student warning printed by the script.
-4. Spot-check adjusted totals against the source gradebooks.
-5. Upload the reviewed CSV manually through Canvas.
+## Current limitations
 
-## Data protection
+- The app supports the current Penn State Canvas and tested MyLab CSV layouts. Vendor export changes may require parser updates.
+- It prepares a CSV but does not change Canvas directly.
+- Name-based matches always require instructor confirmation.
+- Automated accessibility checks cover common WCAG failures, but they do not replace testing with the assistive technology used by an instructor.
+- The final release check remains manual: import the generated file into Canvas's preview and confirm the selected assignment changes before accepting it.
 
-The CSV files and several original guide slides contain student names, institutional IDs, email addresses, and grade data. Treat them as protected education records.
+## Legacy guide
 
-- Do not commit real gradebooks or rendered screenshots of them to a public repository.
-- Replace historical comparison data with anonymized fixtures before sharing the project.
-- Treat any token shown in the original PowerPoint as compromised, even if it has expired.
-- Delete local exports according to institutional retention policy after grades are verified.
+The original PowerPoint introduced the command-line workflow and motivated the browser redesign. Its setup path is obsolete and several slides contained private material, so the source deck is intentionally excluded from the public project. This sanitized cover is retained for historical context.
 
-## Known limitations
-
-- Live execution stops without a valid Canvas token; there is no offline assignment-selection mode.
-- Importing `grading-script.py` immediately prompts for a token and runs the application, which prevents straightforward unit testing.
-- CSV parsing depends on hard-coded row and column positions.
-- Student matching falls back to substring checks on normalized names and can produce ambiguous matches.
-- An unmatched MyLab student can leave `canvas_score` undefined in `sumScores()`.
-- Cancelling course or assignment selection returns `None`, but the caller only checks for `0`.
-- The dependency environment file is invalid and dependencies are not pinned.
-- The HTML form has no backend and should be treated as a mockup.
-- There are no automated tests, structured logs, input previews, or rollback mechanism.
-
-## Recommended next steps
-
-1. Separate Canvas access, CSV parsing, matching, grading rules, and output into testable modules.
-2. Add an offline mode that accepts an assignment column directly.
-3. Validate input schemas and show a preview before writing output.
-4. Replace name-substring matching with deterministic identifiers plus a manual review queue.
-5. Add anonymized fixtures and unit tests for parsing, adjustment boundaries, unmatched students, and output preservation.
-6. Decide between a polished CLI and a real local web interface; remove the unused HTML prototype if the CLI remains the product.
-
+![Sanitized cover from the original program guide](docs/images/how-to-use-cover.png)

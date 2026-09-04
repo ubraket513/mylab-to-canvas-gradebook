@@ -16,7 +16,9 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "npm run build && playwright test --project=chromium --project=tablet",
-    "test:e2e:edge": "npm run build && playwright test --project=edge"
+    "test:e2e:edge": "npm run build && playwright test --project=edge",
+    "check:size": "npm run build && node scripts/check-bundle-size.mjs",
+    "docs:screenshots": "npm run build && playwright test tests/e2e/docs-screenshots.spec.ts --project=chromium"
   },
   "dependencies": {
     "papaparse": "5.7.0"

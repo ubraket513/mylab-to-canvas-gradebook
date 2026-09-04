@@ -165,11 +165,7 @@ export class AppController implements AppHandlers {
       }
     })
     this.render()
-    const heading = this.root.querySelector<HTMLElement>("#page-title")
-    if (heading) {
-      heading.tabIndex = -1
-      heading.focus()
-    }
+    this.focusHeading()
   }
 
   continue = (): void => {
@@ -185,6 +181,7 @@ export class AppController implements AppHandlers {
         })
       }
       this.render()
+      this.focusHeading()
       return
     }
     if (this.state.step === "assignment-mylab") {
@@ -196,6 +193,7 @@ export class AppController implements AppHandlers {
       this.state = reduceAppState(this.state, { type: "mylab-loaded", ...availableMyLab })
       this.pendingMyLab = null
       this.render()
+      this.focusHeading()
       return
     }
     if (this.state.step === "configure") {
@@ -222,12 +220,14 @@ export class AppController implements AppHandlers {
       })
       this.state = reduceAppState(this.state, { type: "review-prepared", matches, decisions, review })
       this.render()
+      this.focusHeading()
     }
   }
 
   back = (): void => {
     this.state = reduceAppState(this.state, { type: "back" })
     this.render()
+    this.focusHeading()
   }
 
   reset = (): void => {
@@ -235,6 +235,10 @@ export class AppController implements AppHandlers {
     this.pendingMyLab = null
     this.state = reduceAppState(this.state, { type: "reset" })
     this.render()
+    this.focusHeading()
+  }
+
+  private focusHeading(): void {
     const heading = this.root.querySelector<HTMLElement>("#page-title")
     if (heading) {
       heading.tabIndex = -1
