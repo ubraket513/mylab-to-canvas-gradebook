@@ -47,3 +47,24 @@ export interface CanvasGradebook {
   assignments: CanvasAssignment[]
   students: CanvasStudent[]
 }
+
+export interface MyLabSection {
+  key: string
+  columnIndex: number
+  detectedWeight: number
+}
+
+export interface MyLabStudent {
+  rowIndex: number
+  firstName: string
+  lastName: string
+  email: string
+  login: string
+  scores: Record<string, ParsedNumber>
+}
+
+export interface MyLabGradebook {
+  sections: MyLabSection[]
+  students: MyLabStudent[]
+  issues: ValidationIssue[]
+}
