@@ -39,6 +39,18 @@ button, label[for] { touch-action: manipulation; }
 .brand-mark { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: 8px; color: var(--navy); background: #fff; font-weight: 800; }
 .brand-name { font-size: 1.08rem; font-weight: 760; }
 .brand-context { margin-left: auto; color: #dce8f6; font-size: 0.9rem; }
+.partner-logos { margin: 0 0 0 1.2rem; display: flex; align-items: center; gap: 0.6rem; }
+.partner-logo { display: inline-flex; align-items: center; gap: 0.36rem; border: 1px solid #e6edf5; padding: 0.3rem 0.55rem; border-radius: 999px; font-size: 0.74rem; font-weight: 760; }
+.partner-logo__glyph { width: 1.35rem; height: 1.35rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; }
+.partner-logo__label { color: #e9f2ff; font-size: 0.73rem; }
+.partner-logo--penn-state .partner-logo__glyph { background: #002d72; }
+.partner-logo--canvas .partner-logo__glyph { background: #e77d20; }
+.partner-logo--pearson .partner-logo__glyph { background: #1db954; }
+
+@media (max-width: 1060px) {
+  .brand-context { display: none; }
+  .partner-logos { margin-left: auto; }
+}
 
 .app-shell { max-width: 1120px; margin: 0 auto; padding: 1.5rem; }
 .progress { margin: 0 auto 1.5rem; }

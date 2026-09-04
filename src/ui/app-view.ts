@@ -22,6 +22,32 @@ export interface AppHandlers {
   reset(): void
 }
 
+function createPartnerLogo(
+  label: string,
+  glyph: string,
+  accentClass: string
+): HTMLElement {
+  const logo = createElement("span", {
+    className: `partner-logo partner-logo--${accentClass}`,
+    attributes: { role: "img", "aria-label": `${label} logo` }
+  })
+  logo.append(
+    createElement("span", { className: "partner-logo__glyph", text: glyph, attributes: { "aria-hidden": "true" } }),
+    createElement("span", { className: "partner-logo__label", text: label, attributes: { "aria-hidden": "true" } })
+  )
+  return logo
+}
+
+function createPartnerLogos(): HTMLElement {
+  const logos = createElement("div", { className: "partner-logos", attributes: { "aria-label": "Partner systems" } })
+  logos.append(
+    createPartnerLogo("Penn State", "N", "penn-state"),
+    createPartnerLogo("Canvas", "C", "canvas"),
+    createPartnerLogo("Pearson", "P", "pearson")
+  )
+  return logos
+}
+
 const stepNumber: Record<AppState["step"], number> = {
   canvas: 1,
   "assignment-mylab": 2,
@@ -62,7 +88,7 @@ export function renderApp(root: HTMLElement, state: AppState, handlers: AppHandl
     createElement("span", { className: "brand-name", text: "MyLab → Canvas" }),
     createElement("span", { className: "brand-context", text: "Penn State gradebook helper" })
   )
-  header.append(brand)
+  header.append(brand, createPartnerLogos())
   const shell = createElement("div", { className: "app-shell" })
   shell.append(createStepIndicator(stepNumber[state.step]))
   const main = createElement("main", { attributes: { id: "main-content", tabindex: "-1" } })
