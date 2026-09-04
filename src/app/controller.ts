@@ -125,9 +125,24 @@ export class AppController implements AppHandlers {
       if (section) this.root.querySelector<HTMLInputElement>(`#weight-${section.columnIndex}`)?.focus()
     }
   }
-  resolveMatch(_mylabRowIndex: number, _canvasRowIndex: number | null): void {}
-  setAcknowledgement(_kind: "unmatched" | "blank", _checked: boolean): void {}
-  setMaximumOverride(_canvasRowIndex: number, _checked: boolean): void {}
+  resolveMatch(mylabRowIndex: number, canvasRowIndex: number | null): void {
+    this.state = reduceAppState(this.state, { type: "match-resolved", mylabRowIndex, canvasRowIndex })
+    this.render()
+    const suffix = canvasRowIndex === null ? "unchanged" : String(canvasRowIndex)
+    this.root.querySelector<HTMLInputElement>(`#match-${mylabRowIndex}-${suffix}`)?.focus()
+  }
+
+  setAcknowledgement(kind: "unmatched" | "blank", checked: boolean): void {
+    this.state = reduceAppState(this.state, { type: "acknowledgement-changed", kind, checked })
+    this.render()
+    this.root.querySelector<HTMLInputElement>(kind === "unmatched" ? "#ack-unmatched" : "#ack-blank")?.focus()
+  }
+
+  setMaximumOverride(canvasRowIndex: number, checked: boolean): void {
+    this.state = reduceAppState(this.state, { type: "maximum-override-changed", canvasRowIndex, checked })
+    this.render()
+    this.root.querySelector<HTMLInputElement>(`#maximum-${canvasRowIndex}`)?.focus()
+  }
   download(): void {}
 
   continue = (): void => {
