@@ -1,6 +1,8 @@
 import type { AppState } from "../app/state"
 import { createStepIndicator } from "./components/step-indicator"
 import { createCanvasUploadView } from "./views/canvas-upload"
+import { createAssignmentMyLabView } from "./views/assignment-mylab"
+import { createConfigureView } from "./views/configure"
 import { createElement, createStatusRegion } from "./dom"
 
 export interface AppHandlers {
@@ -62,7 +64,10 @@ export function renderApp(root: HTMLElement, state: AppState, handlers: AppHandl
   const shell = createElement("div", { className: "app-shell" })
   shell.append(createStepIndicator(stepNumber[state.step]))
   const main = createElement("main", { attributes: { id: "main-content", tabindex: "-1" } })
-  main.append(state.step === "canvas" ? createCanvasUploadView(handlers) : createPlaceholder(state, handlers))
+  if (state.step === "canvas") main.append(createCanvasUploadView(handlers))
+  else if (state.step === "assignment-mylab") main.append(createAssignmentMyLabView(state, handlers))
+  else if (state.step === "configure") main.append(createConfigureView(state, handlers))
+  else main.append(createPlaceholder(state, handlers))
   shell.append(main)
   root.replaceChildren(header, shell)
 }

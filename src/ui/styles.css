@@ -82,6 +82,25 @@ h2 { margin: 0 0 0.6rem; color: var(--navy); font-size: 1.1rem; }
 .actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
 .actions--end { justify-content: flex-end; }
 .status-region { min-height: 1.6em; margin: 1rem 0 0; color: var(--navy); font-weight: 700; }
+.actions--between { justify-content: space-between; }
+.field-group { display: grid; gap: 0.45rem; margin: 1.4rem 0; }
+.field-group label { color: var(--navy); font-weight: 750; }
+.field-group input, .field-group select, select { width: 100%; padding: 0.6rem 0.75rem; border: 2px solid var(--border); border-radius: 7px; color: #172033; background: #fff; }
+.field-group input:focus, .field-group select:focus { border-color: var(--blue); }
+.download-help { margin: 1.25rem 0; border: 1px solid var(--border); border-radius: 8px; background: #fbfcfe; }
+.download-help summary { padding: 0.85rem 1rem; color: var(--blue); font-weight: 730; cursor: pointer; }
+.download-help div { padding: 0 1rem 0.7rem; }
+.download-help p { margin: 0.35rem 0; }
+.configuration { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1.25rem; margin-top: 1.5rem; }
+.configuration .field-group:first-child { grid-column: 1 / -1; max-width: 340px; }
+.number-with-suffix { display: flex; align-items: center; gap: 0.65rem; }
+.number-with-suffix input { max-width: 180px; }
+.field-error { margin: 0; color: var(--danger); font-weight: 700; }
+.field-warning { margin: 0; color: #6b4f00; font-weight: 650; }
+.formula-example { margin-top: 1.5rem; padding: 1.15rem 1.25rem; border-radius: 8px; background: var(--soft-blue); }
+.formula-example p { margin: 0; }
+.formula-example p + p { margin-top: 0.4rem; }
+.formula-example__total { color: var(--navy); font-weight: 780; }
 .visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
 
 @media (max-width: 760px) {
@@ -91,6 +110,8 @@ h2 { margin: 0 0 0.6rem; color: var(--navy); font-size: 1.1rem; }
   .app-shell { padding: 1rem; }
   .work-panel { padding: 1.35rem; }
   .actions .button { width: 100%; }
+  .configuration { grid-template-columns: 1fr; }
+  .configuration .field-group:first-child { grid-column: auto; max-width: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
