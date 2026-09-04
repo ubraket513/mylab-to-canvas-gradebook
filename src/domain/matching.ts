@@ -94,9 +94,18 @@ export function matchStudents(
     canvasByLogin.set(key, candidates)
   }
 
+  const myLabLoginCounts = new Map<string, number>()
+  for (const student of mylab) {
+    const key = normalizePsuLogin(student.email)
+    if (key !== "") myLabLoginCounts.set(key, (myLabLoginCounts.get(key) ?? 0) + 1)
+  }
+
   return mylab.map((student) => {
     const key = normalizePsuLogin(student.email)
     const exactCandidates = key === "" ? [] : (canvasByLogin.get(key) ?? [])
+    if ((myLabLoginCounts.get(key) ?? 0) > 1 && exactCandidates.length > 0) {
+      return duplicateMatch(student, exactCandidates)
+    }
     if (exactCandidates.length === 1) return exactMatch(student, exactCandidates[0]!)
     if (exactCandidates.length > 1) return duplicateMatch(student, exactCandidates)
 

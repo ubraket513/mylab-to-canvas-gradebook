@@ -99,6 +99,25 @@ describe("matchStudents", () => {
     })
   })
 
+  it("blocks duplicate normalized MyLab emails from targeting one Canvas row", () => {
+    const result = matchStudents(
+      [canvasStudent(3, "Lovelace, Ada", "adl1")],
+      [
+        myLabStudent(7, "Ada", "Lovelace", "adl1@psu.edu"),
+        myLabStudent(8, "Different", "Student", " ADL1@PSU.EDU ")
+      ]
+    )
+    expect(result).toHaveLength(2)
+    for (const match of result) {
+      expect(match).toMatchObject({
+        status: "duplicate",
+        canvasRowIndex: null,
+        candidateCanvasRowIndices: [3],
+        reason: "duplicate-identifier"
+      })
+    }
+  })
+
   it("keeps all exact-name candidates as an ambiguous suggestion", () => {
     const result = matchStudents(
       [
