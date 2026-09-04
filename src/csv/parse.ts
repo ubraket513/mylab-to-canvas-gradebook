@@ -52,9 +52,33 @@ export function parseCsvText(text: string): ValidationResult<CsvMatrix> {
   return toValidationResult(results, hadBom)
 }
 
-export function parseCsvFile(file: File): Promise<ValidationResult<CsvMatrix>> {
+function fileReadError(): ValidationResult<CsvMatrix> {
+  return {
+    ok: false,
+    errors: [{ code: "file-read-error", severity: "error", message: "We could not read this CSV file." }]
+  }
+}
+
+function parseTextInWorker(text: string): Promise<ValidationResult<CsvMatrix>> {
+  if (typeof Worker === "undefined") return Promise.resolve(parseCsvText(text))
+
+  return new Promise((resolve) => {
+    const worker = new Worker(new URL("./parse-worker.ts", import.meta.url), { type: "module" })
+    worker.addEventListener("message", (event: MessageEvent<ValidationResult<CsvMatrix>>) => {
+      worker.terminate()
+      resolve(event.data)
+    }, { once: true })
+    worker.addEventListener("error", () => {
+      worker.terminate()
+      resolve(fileReadError())
+    }, { once: true })
+    worker.postMessage(text)
+  })
+}
+
+export async function parseCsvFile(file: File): Promise<ValidationResult<CsvMatrix>> {
   if (!file.name.toLowerCase().endsWith(".csv")) {
-    return Promise.resolve({
+    return {
       ok: false,
       errors: [
         {
@@ -63,11 +87,11 @@ export function parseCsvFile(file: File): Promise<ValidationResult<CsvMatrix>> {
           message: "Choose a CSV file."
         }
       ]
-    })
+    }
   }
 
   if (file.size > MAX_CSV_BYTES) {
-    return Promise.resolve({
+    return {
       ok: false,
       errors: [
         {
@@ -76,28 +100,12 @@ export function parseCsvFile(file: File): Promise<ValidationResult<CsvMatrix>> {
           message: "Choose a CSV file that is 25 MB or smaller."
         }
       ]
-    })
+    }
   }
 
-  return new Promise((resolve) => {
-    Papa.parse<string[]>(file, {
-      ...parserOptions,
-      worker: true,
-      complete(results) {
-        resolve(toValidationResult(results, false))
-      },
-      error() {
-        resolve({
-          ok: false,
-          errors: [
-            {
-              code: "file-read-error",
-              severity: "error",
-              message: "We could not read this CSV file."
-            }
-          ]
-        })
-      }
-    })
-  })
+  try {
+    return await parseTextInWorker(await file.text())
+  } catch {
+    return fileReadError()
+  }
 }
