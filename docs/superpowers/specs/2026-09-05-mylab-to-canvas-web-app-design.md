@@ -1,7 +1,7 @@
 # MyLab to Canvas Gradebook Web App Design
 
 **Date:** 2026-09-05  
-**Status:** Approved design, awaiting written-spec review  
+**Status:** Approved for implementation planning
 **Working product name:** MyLab to Canvas Gradebook
 
 ## Summary
@@ -83,7 +83,7 @@ The application validates:
 - at least one editable assignment column exists;
 - Canvas metadata rows needed for a safe round trip are present;
 - duplicate student identifiers are called out;
-- the file is within a documented browser-safe size limit.
+- the file is no larger than 25 MB.
 
 After validation, the screen shows the filename, student count, assignment count, and a clear success message. It does not display student names at this stage.
 
@@ -150,7 +150,7 @@ The final screen summarizes the number of updated, unchanged, and overridden row
 canvas-gradebook-updated-YYYY-MM-DD.csv
 ```
 
-The exporter preserves the original Canvas column order, metadata rows, unrelated assignment values, student rows, and CSV quoting. It changes only the selected assignment cells for confirmed matches.
+The exporter preserves the original Canvas column order, metadata rows, unrelated assignment values, and student rows. It changes only the selected assignment cells for confirmed matches. The output preserves every cell value and remains valid CSV, although the serializer may normalize optional quote placement and line endings.
 
 The screen provides brief steps for importing the CSV back into Canvas and reminds the instructor to review Canvas's import preview before accepting changes. A **Start over** action clears all in-memory file data and returns to step one.
 
@@ -290,7 +290,8 @@ The application never reports a partial download as successful. Unexpected parse
 - Use the existing Canvas, MyLab, and comparison files locally to establish parity with the Python output.
 - Do not publish those files or copy their student data into committed tests.
 - Create anonymized fixtures that retain the same row and metadata structure.
-- Compare exported files against approved anonymized golden files byte-for-byte where practical and cell-for-cell otherwise.
+- Use historical generated files only to investigate numeric score parity. They are not whole-file golden outputs because some contain Pandas-generated identifier and index-column changes that the web exporter must not reproduce.
+- Compare exported files against approved anonymized fixtures cell-for-cell, requiring that only confirmed cells in the selected assignment differ. Byte-for-byte comparison is not required because optional CSV quote placement and line endings may be normalized.
 
 ### Browser Tests
 
