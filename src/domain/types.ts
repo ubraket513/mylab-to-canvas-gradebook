@@ -78,3 +78,67 @@ export interface StudentMatch {
   candidateCanvasRowIndices: number[]
   reason: "identifier" | "name" | "none" | "duplicate-identifier"
 }
+
+export interface ReviewDecisions {
+  matchResolutions: ReadonlyMap<number, number | null>
+  acknowledgedUnmatched: boolean
+  acknowledgedBlankScores: boolean
+  overMaximumOverrides: ReadonlySet<number>
+}
+
+export type ReviewWarningCode =
+  | "unmatched"
+  | "ambiguous-match"
+  | "blank-canvas-score"
+  | "blank-mylab-score"
+  | "invalid-canvas-score"
+  | "invalid-mylab-score"
+  | "over-assignment-maximum"
+
+export interface SectionResult {
+  sectionKey: string
+  raw: ParsedNumber
+  rawUsed: number | null
+  weight: number
+  adjusted: number | null
+}
+
+export interface ReviewRow {
+  key: string
+  mylabRowIndex: number
+  canvasRowIndex: number | null
+  studentDisplayName: string
+  matchStatus: MatchStatus
+  existingCanvasScore: ParsedNumber | null
+  sectionResults: SectionResult[]
+  myLabAddOn: number | null
+  newCanvasScore: number | null
+  warnings: ReviewWarningCode[]
+  includeInExport: boolean
+}
+
+export interface ReviewSummary {
+  confirmed: number
+  needsConfirmation: number
+  unmatched: number
+  blankCanvasScores: number
+  blankMyLabScores: number
+  overMaximum: number
+}
+
+export interface ReviewModel {
+  rows: ReviewRow[]
+  summary: ReviewSummary
+  blockers: string[]
+  exportAllowed: boolean
+}
+
+export interface ReviewInput {
+  canvas: CanvasGradebook
+  assignment: CanvasAssignment
+  mylab: MyLabGradebook
+  weights: ReadonlyMap<string, number>
+  threshold: number
+  matches: readonly StudentMatch[]
+  decisions: ReviewDecisions
+}

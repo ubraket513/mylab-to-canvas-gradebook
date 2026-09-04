@@ -138,4 +138,17 @@ describe("matchStudents", () => {
       reason: "none"
     })
   })
+
+  it("supports Canvas names without a comma while ignoring empty identifiers", () => {
+    const result = matchStudents(
+      [canvasStudent(3, "Ada Lovelace", "")],
+      [myLabStudent(7, "Ada", "Lovelace", "")]
+    )
+    expect(result[0]).toMatchObject({
+      status: "suggested",
+      canvasRowIndex: null,
+      candidateCanvasRowIndices: [3],
+      reason: "name"
+    })
+  })
 })

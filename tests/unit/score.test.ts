@@ -25,6 +25,13 @@ describe("adjustSectionScore", () => {
   it("rejects scores outside zero through one", () => {
     expect(() => adjustSectionScore(1.01, 0.8, 10)).toThrow(RangeError)
   })
+
+  it("rejects non-finite values, invalid thresholds, and negative weights", () => {
+    expect(() => adjustSectionScore(Number.NaN, 0.8, 10)).toThrow(RangeError)
+    expect(() => adjustSectionScore(0.5, 0, 10)).toThrow(RangeError)
+    expect(() => adjustSectionScore(0.5, 0.8, -1)).toThrow(RangeError)
+    expect(() => calculateMyLabAddOn([], 1.01)).toThrow(RangeError)
+  })
 })
 
 describe("totals and final rounding", () => {
@@ -49,5 +56,17 @@ describe("totals and final rounding", () => {
       usedBlankAsZero: true,
       finalScore: 10.2
     })
+  })
+
+  it("handles non-ties and rejects invalid rounding inputs", () => {
+    expect(roundHalfEven(10.26, 1)).toBe(10.3)
+    expect(() => roundHalfEven(-1, 1)).toThrow(RangeError)
+    expect(() => roundHalfEven(1, -1)).toThrow(RangeError)
+    expect(() => roundHalfEven(Number.POSITIVE_INFINITY, 1)).toThrow(RangeError)
+  })
+
+  it("rejects non-finite or negative Canvas score inputs", () => {
+    expect(() => calculateCanvasScore(Number.NaN, 1)).toThrow(RangeError)
+    expect(() => calculateCanvasScore(-1, 1)).toThrow(RangeError)
   })
 })
