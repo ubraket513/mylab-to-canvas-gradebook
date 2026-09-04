@@ -68,3 +68,13 @@ export interface MyLabGradebook {
   students: MyLabStudent[]
   issues: ValidationIssue[]
 }
+
+export type MatchStatus = "exact" | "suggested" | "unmatched" | "duplicate"
+
+export interface StudentMatch {
+  mylabRowIndex: number
+  status: MatchStatus
+  canvasRowIndex: number | null
+  candidateCanvasRowIndices: number[]
+  reason: "identifier" | "name" | "none" | "duplicate-identifier"
+}
