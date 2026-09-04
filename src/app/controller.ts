@@ -1,10 +1,12 @@
 import { parseCanvasGradebook } from "../csv/canvas"
 import { parseCsvFile } from "../csv/parse"
 import { parseMyLabGradebook } from "../csv/mylab"
+import { buildScoreUpdates, exportCanvasGradebook, makeDownloadFilename } from "../csv/export"
 import { matchStudents } from "../domain/matching"
 import { buildReviewModel } from "../domain/review-policy"
 import type { CanvasGradebook, MyLabGradebook, ReviewDecisions } from "../domain/types"
 import { createNotice } from "../ui/components/notice"
+import { downloadCsv } from "../ui/download-file"
 import { focusAlert } from "../ui/dom"
 import { renderApp, type AppHandlers } from "../ui/app-view"
 import { loadThreshold, saveThreshold } from "./preferences"
@@ -29,6 +31,7 @@ export class AppController implements AppHandlers {
     let threshold = 0.8
     try {
       threshold = loadThreshold(window.localStorage)
+      saveThreshold(window.localStorage, threshold)
     } catch {
       // Storage can be disabled without preventing local gradebook processing.
     }
@@ -143,7 +146,31 @@ export class AppController implements AppHandlers {
     this.render()
     this.root.querySelector<HTMLInputElement>(`#maximum-${canvasRowIndex}`)?.focus()
   }
-  download(): void {}
+  download(): void {
+    if (this.state.step !== "review" || !this.state.review.exportAllowed) return
+    const reviewState = this.state
+    const assignment = reviewState.canvas.assignments.find(
+      ({ columnIndex }) => columnIndex === reviewState.selectedAssignmentColumn
+    )
+    if (!assignment) return
+    const updates = buildScoreUpdates(reviewState.review.rows)
+    const contents = exportCanvasGradebook(reviewState.canvas, assignment, updates)
+    downloadCsv(contents, makeDownloadFilename(new Date()))
+    this.state = reduceAppState(reviewState, {
+      type: "download-completed",
+      summary: {
+        updated: updates.size,
+        unchanged: reviewState.canvas.students.length - updates.size,
+        overrides: reviewState.decisions.overMaximumOverrides.size
+      }
+    })
+    this.render()
+    const heading = this.root.querySelector<HTMLElement>("#page-title")
+    if (heading) {
+      heading.tabIndex = -1
+      heading.focus()
+    }
+  }
 
   continue = (): void => {
     if (this.state.step === "canvas") {
@@ -208,6 +235,11 @@ export class AppController implements AppHandlers {
     this.pendingMyLab = null
     this.state = reduceAppState(this.state, { type: "reset" })
     this.render()
+    const heading = this.root.querySelector<HTMLElement>("#page-title")
+    if (heading) {
+      heading.tabIndex = -1
+      heading.focus()
+    }
   }
 
   private render(): void {

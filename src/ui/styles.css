@@ -134,6 +134,12 @@ h2 { margin: 0 0 0.6rem; color: var(--navy); font-size: 1.1rem; }
 .check-option--large { font-weight: 700; }
 .blocker-summary:not(:empty) { margin: 1rem 0; padding: 1rem 1.15rem; border-left: 5px solid var(--danger); color: #7a271a; background: var(--danger-soft); }
 .blocker-summary p, .blocker-summary ul { margin-top: 0; margin-bottom: 0.35rem; }
+.completion-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; margin: 2rem 0; }
+.completion-summary div { display: grid; gap: 0.2rem; padding: 1rem; border: 1px solid var(--border); border-radius: 9px; background: #fbfcfe; }
+.completion-summary span { color: var(--muted); font-size: 0.85rem; font-weight: 700; }
+.completion-summary strong { color: var(--navy); font-size: 1.6rem; }
+.import-instructions { margin: 1.5rem 0; padding: 1.25rem 1.4rem; border-left: 5px solid var(--blue); background: var(--soft-blue); }
+.import-instructions ol { margin-bottom: 0; padding-left: 1.35rem; }
 .visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
 
 @media (max-width: 1050px) {
@@ -159,6 +165,7 @@ h2 { margin: 0 0 0.6rem; color: var(--navy); font-size: 1.1rem; }
   .actions .button { width: 100%; }
   .configuration { grid-template-columns: 1fr; }
   .configuration .field-group:first-child { grid-column: auto; max-width: none; }
+  .completion-summary { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -105,10 +105,10 @@ export function createReviewView(state: ReviewStepState, handlers: AppHandlers):
   back.addEventListener("click", handlers.back)
   const continueButton = createElement("button", {
     className: "button button--primary",
-    text: "Continue to download",
+    text: "Download gradebook",
     attributes: { type: "button", ...(state.review.exportAllowed ? {} : { disabled: "" }) }
   })
-  continueButton.addEventListener("click", handlers.continue)
+  continueButton.addEventListener("click", () => handlers.download())
   actions.append(back, continueButton)
   panel.append(summary, tools, table, acknowledgements, blockers, actions)
   return panel

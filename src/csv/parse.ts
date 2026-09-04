@@ -1,4 +1,5 @@
 import Papa from "papaparse"
+import ParseWorker from "./parse-worker?worker&inline"
 
 import { MAX_CSV_BYTES } from "../config"
 import type { CsvMatrix, ValidationIssue, ValidationResult } from "../domain/types"
@@ -63,7 +64,7 @@ function parseTextInWorker(text: string): Promise<ValidationResult<CsvMatrix>> {
   if (typeof Worker === "undefined") return Promise.resolve(parseCsvText(text))
 
   return new Promise((resolve) => {
-    const worker = new Worker(new URL("./parse-worker.ts", import.meta.url), { type: "module" })
+    const worker = new ParseWorker()
     worker.addEventListener("message", (event: MessageEvent<ValidationResult<CsvMatrix>>) => {
       worker.terminate()
       resolve(event.data)

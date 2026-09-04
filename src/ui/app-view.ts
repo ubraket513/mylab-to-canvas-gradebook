@@ -4,6 +4,7 @@ import { createCanvasUploadView } from "./views/canvas-upload"
 import { createAssignmentMyLabView } from "./views/assignment-mylab"
 import { createConfigureView } from "./views/configure"
 import { createReviewView } from "./views/review"
+import { createDownloadView } from "./views/download"
 import { createElement, createStatusRegion } from "./dom"
 
 export interface AppHandlers {
@@ -69,6 +70,7 @@ export function renderApp(root: HTMLElement, state: AppState, handlers: AppHandl
   else if (state.step === "assignment-mylab") main.append(createAssignmentMyLabView(state, handlers))
   else if (state.step === "configure") main.append(createConfigureView(state, handlers))
   else if (state.step === "review") main.append(createReviewView(state, handlers))
+  else if (state.step === "download") main.append(createDownloadView(state, handlers))
   else main.append(createPlaceholder(state, handlers))
   shell.append(main)
   root.replaceChildren(header, shell)

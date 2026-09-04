@@ -14,7 +14,7 @@ test("requires every safety decision before download", async ({ page }) => {
   await expect(page.getByText("Step 4 of 5: Review scores")).toBeVisible()
   await expect(page.getByRole("heading", { name: "Review before downloading" })).toBeVisible()
   await expect(page.getByText("1 match needs confirmation")).toBeVisible()
-  const continueButton = page.getByRole("button", { name: "Continue to download" })
+  const continueButton = page.getByRole("button", { name: "Download gradebook" })
   await expect(continueButton).toBeDisabled()
 
   await page.getByRole("radio", { name: "Match Grace Hopper to Hopper, Grace" }).check()
