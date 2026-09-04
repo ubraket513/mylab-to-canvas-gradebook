@@ -1,0 +1,19 @@
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+.vercel/
+.env
+.env.*
+!.env.example
+.serena/
+.vscode/
+
+/canvas.csv
+/mylab.csv
+/new_canvas_gradebook.csv
+/canvas-old-gradebook-compare/
+/canvas-new-gradebook-compare/
+/mylab-gradebook-compare/
+/How to use the program.pptx
