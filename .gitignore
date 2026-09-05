@@ -9,6 +9,9 @@ test-results/
 !.env.example
 .serena/
 .vscode/
+AGENTS.md
+*agent*.md
+*AI*.md
 
 /canvas.csv
 /mylab.csv

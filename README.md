@@ -21,7 +21,9 @@ Select the Canvas assignment that should receive the MyLab points. In MyLab, exp
 
 ### 3. Configure grading
 
-Choose a full-credit threshold from 1% through 100%. The default is 80%. Check or edit the point value detected for every MyLab section. Fractional values such as 2.5 are supported, and zero disables a section without blocking the workflow.
+Choose a whole-number full-credit threshold from 1% through 100%. Drag the slider, use minus/plus, or click the underlined percentage to edit it. The default is 80%. Check or edit the point value detected for every MyLab section. Fractional values such as 2.5 are supported, and zero disables a section without blocking the workflow.
+
+The assignment summary shows Canvas's full points possible, the total MyLab allocation, and the room left for existing Canvas scores. If full MyLab credit could exceed the assignment maximum, adjust the section points or confirm the split in the dialog shown by Continue to review. This planning check does not replace individual above-maximum approvals during review.
 
 For a section score `s`, threshold `t`, and section weight `w`:
 
@@ -34,7 +36,7 @@ The adjusted section values are added to the existing score in the selected Canv
 
 ### 4. Review every proposed score
 
-The review screen shows the current Canvas score, calculated MyLab addition, new Canvas score, and all warnings. Expand **Score details** to inspect each section.
+The review screen shows the current Canvas score, calculated MyLab addition, new Canvas score, and all warnings. Hover over, focus, or tap a **MyLab add-on** value to inspect its section scores. Match icons appear beside each student's name.
 
 ![Score review with explicit warnings and confirmations](docs/images/web-review-scores.png)
 
@@ -51,7 +53,7 @@ Invalid numeric content blocks the download. The app changes only confirmed stud
 
 ### 5. Download and import
 
-Download the generated `canvas-gradebook-updated-YYYY-MM-DD.csv`. The app then clears gradebook data from its in-memory state and shows aggregate counts only.
+Download the generated `canvas-gradebook-updated-YYYY-MM-DD.csv`. Use Save as to choose a location in supported browsers, from the Save arrow menu, or Save for a standard browser download. Toasts report the result. Back returns to review with your decisions intact; Start over clears the gradebook data held in this tab.
 
 ![Completed download with Canvas import guidance](docs/images/web-download-complete.png)
 
@@ -74,14 +76,13 @@ Processing happens locally in a dedicated browser worker. The deployed site does
 | `src/app/` | Wizard state, controller, and threshold-only preference storage. |
 | `src/csv/` | CSV text/file parsing, Canvas and MyLab layout validation, browser worker, and Canvas export. |
 | `src/domain/` | Pure score formula, conservative matching, review policy, and shared types. |
-| `src/ui/components/` | Reusable file picker, notices, progress indicator, and review table. |
-| `src/ui/views/` | The five wizard screens. |
+| `src/ui/react/` | All five wizard screens, built with React and Astryx components. |
+| `src/themes/neutral/` | Editable Penn State theme derived from Astryx neutral, plus generated runtime files. |
 | `tests/unit/` | Formula, parser, matching, state, export, and Vercel configuration tests. |
 | `tests/e2e/` | Chromium/tablet workflow, privacy, accessibility, download, and screenshot tests. |
 | `tests/fixtures/anonymized/` | Synthetic gradebooks safe for tests and documentation. |
-| `scripts/check-bundle-size.mjs` | Enforces the 150 KiB compressed JavaScript budget. |
+| `scripts/check-bundle-size.mjs` | Enforces the 200 KiB compressed JavaScript budget for React/Astryx. |
 | `vercel.json` | Static Vite build settings and restrictive response headers. |
-| `grading-script.py` | Retained legacy command-line implementation; it is no longer the primary product. |
 
 ## Local development
 
@@ -106,6 +107,8 @@ npm run preview
 
 The project pins TypeScript 7.0.2. Its `tsc` command uses Microsoft's native TypeScript compiler implemented in Go. The shipped website is still ordinary static HTML, CSS, and JavaScript and requires no Go service.
 
+The full application uses React 19 and Astryx 0.5.2 with navy accents, light surfaces, and locally bundled Google Sans Flex. There are no runtime Google Fonts requests. See [the design system notes](docs/design-system.md) for theme editing and component conventions.
+
 ## Verification
 
 ```powershell
@@ -120,7 +123,7 @@ npm run docs:screenshots
 
 `npm run test:e2e` runs Chromium desktop and tablet projects at full local CPU concurrency. Edge has a separate command so environments without the Edge channel can still run the main suite.
 
-`npm run test:private` is an optional local-only legacy comparison harness. It skips cleanly unless ignored historical comparison directories exist. Never commit real gradebooks or screenshots containing student data.
+Never commit real gradebooks or screenshots containing student data.
 
 ## Vercel deployment
 
@@ -145,6 +148,4 @@ Import the repository into Vercel and review the detected settings before the fi
 
 ## Legacy guide
 
-The original PowerPoint introduced the command-line workflow and motivated the browser redesign. Its setup path is obsolete and several slides contained private material, so the source deck is intentionally excluded from the public project. This sanitized cover is retained for historical context.
-
-![Sanitized cover from the original program guide](docs/images/how-to-use-cover.png)
+The original PowerPoint introduced the command-line workflow and motivated the browser redesign. Its setup path is obsolete and several slides contained private material, so the source deck is intentionally excluded from the public project.

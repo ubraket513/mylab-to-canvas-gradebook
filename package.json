@@ -12,25 +12,40 @@
     "build": "npm run typecheck && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:private": "vitest run --config vitest.private.config.ts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "npm run build && playwright test --project=chromium --project=tablet",
     "test:e2e:edge": "npm run build && playwright test --project=edge",
     "check:size": "npm run build && node scripts/check-bundle-size.mjs",
-    "docs:screenshots": "npm run build && playwright test tests/e2e/docs-screenshots.spec.ts --project=chromium"
+    "docs:screenshots": "npm run build && playwright test tests/e2e/docs-screenshots.spec.ts --project=chromium",
+    "theme:build": "astryx theme build src/themes/neutral/neutralTheme.ts --out src/themes/neutral/penn-state.css",
+    "theme:check": "astryx theme build src/themes/neutral/neutralTheme.ts --out src/themes/neutral/penn-state.css --check",
+    "dev:theme": "vite --host 127.0.0.1 --port 5174 --strictPort"
   },
   "dependencies": {
-    "papaparse": "5.7.0"
+    "@astryxdesign/core": "0.5.2",
+    "@astryxdesign/theme-neutral": "0.5.2",
+    "@fontsource-variable/google-sans-flex": "5.3.1",
+    "@stylexjs/stylex": "0.19.0",
+    "lucide-react": "1.41.0",
+    "papaparse": "5.7.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@astryxdesign/cli": "0.5.2",
     "@axe-core/playwright": "4.13.0",
     "@playwright/test": "1.62.1",
     "@types/node": "24",
     "@types/papaparse": "5.5.2",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
     "@vitest/coverage-v8": "5.0.0",
     "typescript": "7.0.2",
     "vite": "8.2.2",
     "vitest": "5.0.0"
+  },
+  "astryx": {
+    "theme": "./src/themes/neutral/neutralTheme.ts"
   }
 }

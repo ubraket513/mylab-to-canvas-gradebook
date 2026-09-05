@@ -5,10 +5,10 @@ import { buildScoreUpdates, exportCanvasGradebook, makeDownloadFilename } from "
 import { matchStudents } from "../domain/matching"
 import { buildReviewModel } from "../domain/review-policy"
 import type { CanvasGradebook, MyLabGradebook, ReviewDecisions } from "../domain/types"
-import { createNotice } from "../ui/components/notice"
-import { downloadCsv } from "../ui/download-file"
+import { downloadCsv, saveCsvAs } from "../ui/download-file"
 import { focusAlert } from "../ui/dom"
-import { renderApp, type AppHandlers } from "../ui/app-view"
+import { renderApp } from "../ui/react/app"
+import type { AppHandlers, UploadFeedback } from "./handlers"
 import { loadThreshold, saveThreshold } from "./preferences"
 import { createInitialState, reduceAppState, type AppState } from "./state"
 
@@ -26,6 +26,9 @@ export class AppController implements AppHandlers {
   private state: AppState
   private pendingCanvas: PendingCanvas | null = null
   private pendingMyLab: PendingMyLab | null = null
+  private uploadVersion = 0
+  private renderedStep: AppState["step"] | null = null
+  private feedback: UploadFeedback = { message: "", error: "", busy: false, ready: false }
 
   constructor(private readonly root: HTMLElement) {
     let threshold = 0.8
@@ -43,9 +46,11 @@ export class AppController implements AppHandlers {
   }
 
   async selectCanvasFile(file: File): Promise<void> {
+    const version = ++this.uploadVersion
     this.pendingCanvas = null
     this.setFeedback("Checking your Canvas gradebook…", true)
     const parsed = await parseCsvFile(file)
+    if (version !== this.uploadVersion || this.state.step !== "canvas") return
     if (!parsed.ok) {
       this.showError(
         parsed.errors[0]?.code === "invalid-file-type"
@@ -82,9 +87,12 @@ export class AppController implements AppHandlers {
   }
 
   async selectMyLabFile(file: File): Promise<void> {
+    const version = ++this.uploadVersion
     this.pendingMyLab = null
+    if (this.state.step === "assignment-mylab") this.state = { ...this.state, mylab: null, mylabFileName: null }
     this.setFeedback("Checking your MyLab gradebook…", true)
     const parsed = await parseCsvFile(file)
+    if (version !== this.uploadVersion || this.state.step !== "assignment-mylab") return
     if (!parsed.ok) {
       this.showError(
         parsed.errors[0]?.code === "invalid-file-type"
@@ -96,7 +104,7 @@ export class AppController implements AppHandlers {
     const mylab = parseMyLabGradebook(parsed.value)
     if (!mylab.ok) {
       this.showError(
-        `This does not look like the supported MyLab gradebook. ${mylab.errors[0]?.message ?? "Check the export and try again."}`
+        mylab.errors[0]?.message ?? "Choose a supported MyLab gradebook CSV. Check the export and try again."
       )
       return
     }
@@ -109,7 +117,7 @@ export class AppController implements AppHandlers {
 
   setThreshold(percent: number): void {
     const threshold = percent / 100
-    if (!Number.isFinite(threshold) || threshold < 0.01 || threshold > 1) return
+    if (!Number.isInteger(percent) || !Number.isFinite(threshold) || threshold < 0.01 || threshold > 1) return
     this.state = reduceAppState(this.state, { type: "threshold-changed", threshold })
     try {
       saveThreshold(window.localStorage, threshold)
@@ -117,45 +125,45 @@ export class AppController implements AppHandlers {
       // Storage can be unavailable; the in-memory preference still works.
     }
     this.render()
-    this.root.querySelector<HTMLInputElement>("#threshold")?.focus()
   }
 
   setWeight(sectionKey: string, weight: number): void {
     this.state = reduceAppState(this.state, { type: "weight-changed", sectionKey, weight })
     this.render()
-    if (this.state.step === "configure") {
-      const section = this.state.mylab.sections.find(({ key }) => key === sectionKey)
-      if (section) this.root.querySelector<HTMLInputElement>(`#weight-${section.columnIndex}`)?.focus()
-    }
   }
   resolveMatch(mylabRowIndex: number, canvasRowIndex: number | null): void {
     this.state = reduceAppState(this.state, { type: "match-resolved", mylabRowIndex, canvasRowIndex })
     this.render()
-    const suffix = canvasRowIndex === null ? "unchanged" : String(canvasRowIndex)
-    this.root.querySelector<HTMLInputElement>(`#match-${mylabRowIndex}-${suffix}`)?.focus()
   }
 
   setAcknowledgement(kind: "unmatched" | "blank", checked: boolean): void {
     this.state = reduceAppState(this.state, { type: "acknowledgement-changed", kind, checked })
     this.render()
-    this.root.querySelector<HTMLInputElement>(kind === "unmatched" ? "#ack-unmatched" : "#ack-blank")?.focus()
   }
 
   setMaximumOverride(canvasRowIndex: number, checked: boolean): void {
     this.state = reduceAppState(this.state, { type: "maximum-override-changed", canvasRowIndex, checked })
     this.render()
-    this.root.querySelector<HTMLInputElement>(`#maximum-${canvasRowIndex}`)?.focus()
   }
-  download(): void {
-    if (this.state.step !== "review" || !this.state.review.exportAllowed) return
-    const reviewState = this.state
+  async download(saveAs = false): Promise<"downloaded" | "saved" | "cancelled"> {
+    if (this.state.step !== "download" || !this.state.reviewState.review.exportAllowed) throw new Error("Gradebook is not ready")
+    const reviewState = this.state.reviewState
     const assignment = reviewState.canvas.assignments.find(
       ({ columnIndex }) => columnIndex === reviewState.selectedAssignmentColumn
     )
-    if (!assignment) return
+    if (!assignment) throw new Error("Assignment is unavailable")
     const updates = buildScoreUpdates(reviewState.review.rows)
-    const contents = exportCanvasGradebook(reviewState.canvas, assignment, updates)
-    downloadCsv(contents, makeDownloadFilename(new Date()))
+    const contents = () => exportCanvasGradebook(reviewState.canvas, assignment, updates)
+    const filename = makeDownloadFilename(new Date())
+    if (saveAs) return saveCsvAs(contents, filename)
+    downloadCsv(contents(), filename)
+    return "downloaded"
+  }
+
+  private prepareDownload(): void {
+    if (this.state.step !== "review" || !this.state.review.exportAllowed) return
+    const reviewState = this.state
+    const updates = buildScoreUpdates(reviewState.review.rows)
     this.state = reduceAppState(reviewState, {
       type: "download-completed",
       summary: {
@@ -169,6 +177,7 @@ export class AppController implements AppHandlers {
   }
 
   continue = (): void => {
+    if (this.state.step === "review") { this.prepareDownload(); return }
     if (this.state.step === "canvas") {
       if (!this.pendingCanvas) return
       const pending = this.pendingCanvas
@@ -225,12 +234,15 @@ export class AppController implements AppHandlers {
   }
 
   back = (): void => {
+    this.uploadVersion++
     this.state = reduceAppState(this.state, { type: "back" })
+    if (this.state.step === "canvas") this.pendingMyLab = null
     this.render()
     this.focusHeading()
   }
 
   reset = (): void => {
+    this.uploadVersion++
     this.pendingCanvas = null
     this.pendingMyLab = null
     this.state = reduceAppState(this.state, { type: "reset" })
@@ -247,33 +259,36 @@ export class AppController implements AppHandlers {
   }
 
   private render(): void {
-    renderApp(this.root, this.state, this)
+    if (this.renderedStep !== this.state.step) {
+      this.feedback = { message: "", error: "", busy: false, ready: false }
+      this.renderedStep = this.state.step
+      if (this.state.step === "assignment-mylab" && this.state.mylab) {
+        this.feedback.message = `${this.state.mylab.students.length} students and ${this.state.mylab.sections.length} MyLab sections found.`
+      }
+    }
+    const ready = this.state.step === "canvas" ? this.pendingCanvas !== null
+      : this.state.step === "assignment-mylab" && this.state.selectedAssignmentColumn !== null && (this.pendingMyLab !== null || this.state.mylab !== null)
+    renderApp(this.root, this.state, this, { ...this.feedback, ready: ready && !this.feedback.busy && !this.feedback.error })
   }
 
   private setFeedback(message: string, busy: boolean): void {
-    this.root.querySelector("#app-alert")?.replaceChildren()
-    const status = this.root.querySelector<HTMLElement>("#app-status")
-    if (status) status.textContent = message
-    const button = this.root.querySelector<HTMLButtonElement>("#continue-button")
-    const ready =
-      this.state.step === "canvas"
-        ? this.pendingCanvas !== null
-        : this.state.step === "assignment-mylab"
-          ? (this.pendingMyLab !== null || this.state.mylab !== null) &&
-            this.state.selectedAssignmentColumn !== null
-          : false
-    if (button) button.disabled = busy || !ready
+    this.feedback = { message, busy, error: "", ready: false }
+    this.render()
   }
 
   private showError(message: string): void {
-    const host = this.root.querySelector<HTMLElement>("#app-alert")
-    if (host) {
-      host.replaceChildren(createNotice(message, "error"))
-      focusAlert(host)
+    this.feedback = { message: "", error: message, busy: false, ready: false }
+    this.render()
+    focusAlert(this.root)
+  }
+
+  clearFile(kind: "canvas" | "mylab"): void {
+    this.uploadVersion++
+    if (kind === "canvas") this.pendingCanvas = null
+    else {
+      this.pendingMyLab = null
+      if (this.state.step === "assignment-mylab") this.state = { ...this.state, mylab: null, mylabFileName: null }
     }
-    const status = this.root.querySelector<HTMLElement>("#app-status")
-    if (status) status.textContent = "The selected file was not accepted."
-    const button = this.root.querySelector<HTMLButtonElement>("#continue-button")
-    if (button) button.disabled = true
+    this.setFeedback("", false)
   }
 }

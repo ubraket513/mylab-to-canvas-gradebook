@@ -46,6 +46,7 @@ export interface ReviewStepState extends ConfiguredData {
 
 export interface DownloadStepState extends BaseState {
   step: "download"
+  reviewState: ReviewStepState
   summary: { updated: number; unchanged: number; overrides: number }
 }
 
@@ -210,8 +211,9 @@ export function reduceAppState(state: AppState, action: AppAction): AppState {
     }
     case "download-completed":
       if (state.step !== "review") return state
-      return { step: "download", threshold: state.threshold, summary: action.summary }
+      return { step: "download", threshold: state.threshold, summary: action.summary, reviewState: state }
     case "back":
+      if (state.step === "download") return state.reviewState
       if (state.step === "assignment-mylab") return createInitialState(state.threshold)
       if (state.step === "configure") return toAssignmentStep(state)
       if (state.step === "review") return toConfigureStep(state)
