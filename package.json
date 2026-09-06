@@ -2,6 +2,12 @@
   "name": "mylab-to-canvas-gradebook",
   "private": true,
   "version": "0.1.0",
+  "license": "MIT",
+  "author": "Dohyoung Ko (Pennsylvania State University)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ubraket513/mylab-to-canvas-gradebook.git"
+  },
   "type": "module",
   "engines": {
     "node": "24.x"

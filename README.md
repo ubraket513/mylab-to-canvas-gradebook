@@ -76,12 +76,12 @@ Processing happens locally in a dedicated browser worker. The deployed site does
 | `src/app/` | Wizard state, controller, and threshold-only preference storage. |
 | `src/csv/` | CSV text/file parsing, Canvas and MyLab layout validation, browser worker, and Canvas export. |
 | `src/domain/` | Pure score formula, conservative matching, review policy, and shared types. |
-| `src/ui/react/` | All five wizard screens, built with React and Astryx components. |
+| `src/ui/react/` | All five wizard screens plus the three help pages, built with React and Astryx components. |
 | `src/themes/neutral/` | Editable Penn State theme derived from Astryx neutral, plus generated runtime files. |
 | `tests/unit/` | Formula, parser, matching, state, export, and Vercel configuration tests. |
 | `tests/e2e/` | Chromium/tablet workflow, privacy, accessibility, download, and screenshot tests. |
 | `tests/fixtures/anonymized/` | Synthetic gradebooks safe for tests and documentation. |
-| `scripts/check-bundle-size.mjs` | Enforces the 200 KiB compressed JavaScript budget for React/Astryx. |
+| `scripts/check-bundle-size.mjs` | Enforces the 1 MiB compressed JavaScript budget across both documents. |
 | `vercel.json` | Static Vite build settings and restrictive response headers. |
 
 ## Local development
@@ -145,6 +145,25 @@ Import the repository into Vercel and review the detected settings before the fi
 - Name-based matches always require instructor confirmation.
 - Automated accessibility checks cover common WCAG failures, but they do not replace testing with the assistive technology used by an instructor.
 - The final release check remains manual: import the generated file into Canvas's preview and confirm the selected assignment changes before accepting it.
+
+## Help, privacy, and license
+
+The header carries two controls on the right: a GitHub mark linking to this repository, and an information
+button that opens the help pages in a new tab, so an in-progress gradebook keeps its state in the original tab.
+Those pages are three separate documents sharing the app header, an Astryx `SideNav` for moving between them,
+and a footer that credits the author and holds no controls:
+
+| Page | Purpose |
+| --- | --- |
+| `/crash-report.html` | A form for problems and suggestions. It collects nothing on its own: there is no automatic crash reporting and no telemetry anywhere in the app. It assembles what the instructor typed into a prefilled GitHub issue and opens it in a new tab, leaving the decision to submit with them. |
+| `/privacy.html` | What the app stores locally and what it never collects. |
+| `/license.html` | The terms, the third-party components, and the trademarks. |
+
+The first workflow screen credits the author in the footer; the local-processing promise is stated in the step
+content and in the privacy policy.
+
+This project is licensed under the MIT License; see [LICENSE](LICENSE).
+Copyright (c) 2026 Dohyoung Ko, Pennsylvania State University.
 
 ## Legacy guide
 

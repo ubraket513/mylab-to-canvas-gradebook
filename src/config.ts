@@ -1,3 +1,10 @@
+export const REPOSITORY_URL = "https://github.com/ubraket513/mylab-to-canvas-gradebook"
+export const ISSUES_URL = `${REPOSITORY_URL}/issues/new`
+export const AUTHOR = "Dohyoung Ko"
+export const AUTHOR_AFFILIATION = "Pennsylvania State University"
+export const DEVELOPED_YEAR = "2026"
+export const LICENSE_NAME = "MIT License"
+export const LICENSE_SPDX = "MIT"
 export const APP_NAME = "MyLab to Canvas Gradebook"
 export const DEFAULT_THRESHOLD = 0.8
 export const MIN_THRESHOLD = 0.01

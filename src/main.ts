@@ -1,9 +1,5 @@
 import { AppController } from "./app/controller"
-import "@astryxdesign/core/reset.css"
-import "@astryxdesign/core/astryx.css"
-import "@fontsource-variable/google-sans-flex"
-import "./themes/neutral/penn-state.css"
-import "./ui/accessibility.css"
+import "./ui/styles"
 import pennStateMark from "./ui/assets/penn-state-mark.png"
 import canvasMark from "./ui/assets/canvas-mark.png"
 
