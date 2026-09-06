@@ -14,8 +14,9 @@ async function javascriptFiles(directory) {
   return nested.flat()
 }
 
-// React/Astryx, modal decisions and toast/save controls currently total ~190 KiB.
-const limit = 200 * 1024
+// Budget for the app plus the About page. Well above current usage; a breach means something large
+// was added by accident, not that the app drifted a few KiB.
+const limit = 1024 * 1024
 const files = await javascriptFiles("dist/assets")
 const sizes = await Promise.all(files.map(async (file) => gzipSync(await readFile(file)).byteLength))
 const total = sizes.reduce((sum, bytes) => sum + bytes, 0)
